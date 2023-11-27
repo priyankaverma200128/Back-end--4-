@@ -1,6 +1,7 @@
 const router = require("express").Router()
 const multer = require("multer")
 const multerS3 = require('multer-s3')
+const path = require('path')
 const { S3Client,GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const courseController = require('../apis/course/courseController')
