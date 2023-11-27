@@ -17,17 +17,23 @@ router .post('/login',userController.login)
 
 
 // Course Routes
-const courseStorage = multer.diskStorage({
-    destination:(req,file,cb)=>{
-        cb(null,'server/public/course/')
-    },
-    filename:(req,file,cb)=>{
-        let picname = Date.now() + file.originalname
-        req.body.attachment='course/' + picname
-        cb(null, picname)
-    }
-})
-const courseUpload = multer({storage:courseStorage})
+var courseUpload = multer({
+    storage: multerS3({
+      s3: s3,
+      bucket: process.env.CYCLIC_BUCKET_NAME,
+      metadata: function (req, file, cb) {
+        cb(null, {
+          fieldName: file.fieldname
+        });
+      },
+      key: function (req, file, cb) {
+        const filename = file.originalname.replace(path.extname(file.originalname), "")
+        const extension = path.extname(file.originalname);
+        cb(null, `${filename}${Date.now()}${extension}`)
+      }
+    })
+  })
+// const courseUpload = multer({storage:courseStorage})
 router.post('/course/add',courseUpload.single('attachment'),courseController.add)
 router.post('/course/all',courseController.getAll)
 router.post('/course/single',courseController.getSingle)

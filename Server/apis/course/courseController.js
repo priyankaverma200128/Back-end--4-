@@ -21,7 +21,7 @@ const add=async (req,res)=>{
         let course = new Course()
         course.autoId = total+1
         course.courseName = req.body.courseName
-        course.attachment = req.body.attachment
+        course.attachment = req.file.key
         
         course.save()
             .then((data) => {
