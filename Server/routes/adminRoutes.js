@@ -1,6 +1,8 @@
 const router = require("express").Router()
 const multer = require("multer")
 const multerS3 = require('multer-s3')
+const { S3Client,GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const courseController = require('../apis/course/courseController')
 const customerController = require('../apis/customer/customerController')
 const branchController = require('../apis/branch/branchController')
@@ -15,7 +17,15 @@ const dashboardController = require("../apis/dashboard/dashboardController")
 // login api
 router .post('/login',userController.login)
 
-
+//S3 client 
+const s3 = new S3Client({
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      sessionToken: process.env.AWS_SESSION_TOKEN
+    },
+    region: process.env.AWS_REGION,
+  })
 
 // Course Routes
 var courseUpload = multer({
