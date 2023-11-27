@@ -80,17 +80,23 @@ router.get('/dashboard',dashboardController.dashboard)
 router.post('/course/delete',courseController.deleteCourse)
 
 // Branch Routes
-const branchStorage = multer.diskStorage({
-    destination:(req,file,cb)=>{
-        cb(null,'server/public/branch/')
-    },
-    filename:(req,file,cb)=>{
-        let picname = Date.now() + file.originalname
-        req.body.attachment='branch/' + picname
-        cb(null, picname)
-    }
-})
-const branchUpload = multer({storage:branchStorage})
+var branchUpload = multer({
+    storage: multerS3({
+      s3: s3,
+      bucket: process.env.CYCLIC_BUCKET_NAME,
+      metadata: function (req, file, cb) {
+        cb(null, {
+          fieldName: file.fieldname
+        });
+      },
+      key: function (req, file, cb) {
+        const filename = file.originalname.replace(path.extname(file.originalname), "")
+        const extension = path.extname(file.originalname);
+        cb(null, `${filename}${Date.now()}${extension}`)
+      }
+    })
+  })
+// const branchUpload = multer({storage:branchStorage})
 router.post('/branch/add',branchUpload.single('attachment'),branchController.add)
 router.post('/branch/update',branchUpload.single('attachment'),branchController.update)
 router.post('/branch/delete',branchController.deleteBranch)
@@ -102,18 +108,24 @@ router.post('/materialtype/delete',materialtypeController.deleteMaterialtype)
 
 
 // material routes
-const taskStorage = multer.diskStorage({
-    destination:(req,file,cb)=>{
-        cb(null,'server/public/material/')
-    },
-    filename:(req,file,cb)=>{
-        let picname = Date.now() + file.originalname
-        req.body.attachment='material/' + picname
-        cb(null, picname)
-    }
-})
+var materialupload = multer({
+    storage: multerS3({
+      s3: s3,
+      bucket: process.env.CYCLIC_BUCKET_NAME,
+      metadata: function (req, file, cb) {
+        cb(null, {
+          fieldName: file.fieldname
+        });
+      },
+      key: function (req, file, cb) {
+        const filename = file.originalname.replace(path.extname(file.originalname), "")
+        const extension = path.extname(file.originalname);
+        cb(null, `${filename}${Date.now()}${extension}`)
+      }
+    })
+  })
 
-const materialupload = multer({storage:taskStorage})
+// const materialupload = multer({storage:taskStorage})
 router.post('/material/add', materialupload.single('attachment'), materialController.add)
 router.post('/material/update', materialupload.single('attachment'), materialController.update)
 router.post('/material/delete',materialController.deleteMaterial)
