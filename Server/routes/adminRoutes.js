@@ -1,5 +1,6 @@
 const router = require("express").Router()
 const multer = require("multer")
+const multerS3 = require('multer-s3')
 const courseController = require('../apis/course/courseController')
 const customerController = require('../apis/customer/customerController')
 const branchController = require('../apis/branch/branchController')
