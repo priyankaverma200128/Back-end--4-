@@ -1,5 +1,5 @@
 const Course = require("./courseModel")
-const helper  = require('../../helper')
+const helper  = require('../../utilites/helper')
 
 
 const add=async (req,res)=>{
