@@ -106,7 +106,7 @@ const getAll = async (req, resp) => {
                     course.attachment
                 )
                 return {
-                    ...vendor.toObject(),
+                    ...course.toObject(),
                     signedUrl
                 }
             })
