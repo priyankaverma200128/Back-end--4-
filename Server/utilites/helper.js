@@ -23,7 +23,16 @@ async function generatePresignedUrl (bucket,key,expiresIn = 3600){
 
     return signedUrl;
 }
+function unlinkImage(pic) {
+  if (pic != undefined && pic != "") {
+    fs.unlink("server/public/" + pic, (err) => {
+      // if(err) console.log(err);
+      // else console.log("image Replaced");
+    });
+  }
+}
 
 module.exports = {
-    generatePresignedUrl
+    generatePresignedUrl,
+    unlinkImage
   }

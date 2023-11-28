@@ -1,4 +1,5 @@
 const Branch = require("./branchModel")
+const helper  = require('../../utilites/helper')
 
 const add=async(req,res)=>{
     var validation =""
@@ -42,51 +43,72 @@ const add=async(req,res)=>{
     
 }
 
-const getAll= (req,res)=>{
-    Branch.find(req.body)
-    .populate('courseId')
-    .then((data)=>{
-        res.send({
-            success:true,
-            status:200,
-            message:"All Batches are Loaded",
-            data:data,
-            total:data.length
+const getAll = async (req, resp) => {
+
+    try {
+        const branches = await Branch.find(req.body).populate('courseId')
+
+        const branchwithurl = await Promise.all(
+            branches.map(async (branch) => {
+                const signedUrl = await helper.generatePresignedUrl(
+                    process.env.CYCLIC_BUCKET_NAME,
+                    branch.attachment
+                )
+                return {
+                    ...branch.toObject(),
+                    signedUrl
+                }
+            })
+        )
+        resp.send({
+            success: true,
+            status: 200,
+            message: "All Branches loaded",
+            data: branchwithurl,
         })
-    })
-    .catch((err)=>{
-        res.send({
-            success:false,
-            status:500,
-            message:err.message
-        })
-    })
+    }
+    catch (err) {
+        resp.send({
+            success: false,
+            status: 500,
+            message: !!err.message ? err.message : err,
+        });
+    }
 }
 
-const getSingle = (req,res)=>{
-    let validation =""
-    if(!req.body._id){
-        validation="id is required"
-    }
-    if(!!validation){
-        res.send({success:false,status:500,message:validation})
-    }
-    else{
-        Branch.findOne({_id:req.body._id})
-        .then((data)=>{
-            if(data==null){
-                res.send({success:false,status:500,message:"Project does not exist"})
-            }
-            else{
-                res.send({success:true,status:200,message:"Single document loaded",data:data})
-            }
-        })
-        .catch((err)=>{
-            res.send({success:false,status:500,message:err.message})
-        })
-    }
+const getSingle = async (req, resp) => {
+    try {
+        let formData = req.body
+        let validation = ""
+        if (!formData._id)
+            validation += "_id is required"
+        if (!!validation)
+            resp.send({ success: false, status: 422, message: validation })
 
-}
+        let query = { _id: formData._id }
+        const branch = await Branch.findOne(query)
+        if (!!course) {
+            const signedUrl = await helper.generatePresignedUrl(
+                process.env.CYCLIC_BUCKET_NAME,
+                branch.attachment
+            )
+            resp.send({
+                success: true,
+                status: 200,
+                message: "Branch loaded Successfully",
+                data: { ...branch.toObject(), signedUrl },
+            });
+        } else {
+            resp.send({ success: false, status: 404, message: "No Branch Found" });
+        }
+    } catch (err) {
+        resp.send({
+            success: false,
+            status: 500,
+            message: !!err.message ? err.message : err,
+        });
+    }
+};
 
 const update = (req,res)=>{
     console.log(req.body);
@@ -121,7 +143,7 @@ const update = (req,res)=>{
                         res.send({
                             success:true,
                             status:200,
-                            message:"data updated",
+                            message:"branch updated",
                             data:updated
                         })
                     })

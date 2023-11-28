@@ -127,118 +127,80 @@ const getAll = async (req, resp) => {
     }
 }
 
-const getSingle = (req,res)=>{
+ const getSingle = async (req, resp) => {
+    try {
+        let formData = req.body
+        let validation = ""
+        if (!formData._id)
+            validation += "_id is required"
+        if (!!validation)
+            resp.send({ success: false, status: 422, message: validation })
 
-    let validation =""
-    if(!req.body._id){
-        validation = "id is required"
-    }
-    if(!!validation){
-        res.send({
-            success:false,
-            status:500,
-            message:validation
-        })
-    }
-    else{
-        Course.findOne({_id:req.body._id})
-        .then((data)=>{
-            if(data==null){
-                res.send({
-                    success:false,
-                    status:500,
-                    message:"project does not exist"
-                })
-            }
-            else{
-                res.send({
-                    success:true,
-                    status:200,
-                    message:"single document loaded",
-                    data:data
-                })
-            }
-        })
-        .catch((err)=>{
-            res.send({
-                success:false,
-                status:500,
-                message:err.message
-            })
-        })
-    }
-}
-
-const update = (req, res) => {
-    console.log(req.body)
-    let validation = "";
-    if (!req.body._id) { // Corrected from req.body._Id to req.body._id
-        validation += "id is required";
-    }
-    if (!!validation) {
-        res.send({
+        let query = { _id: formData._id }
+        const course = await Course.findOne(query)
+        if (!!course) {
+            const signedUrl = await helper.generatePresignedUrl(
+                process.env.CYCLIC_BUCKET_NAME,
+                course.attachment
+            )
+            resp.send({
+                success: true,
+                status: 200,
+                message: "Service loaded Successfully",
+                data: { ...course.toObject(), signedUrl },
+            });
+        } else {
+            resp.send({ success: false, status: 404, message: "No Course Found" });
+        }
+    } catch (err) {
+        resp.send({
             success: false,
             status: 500,
-            message: validation,
+            message: !!err.message ? err.message : err,
         });
-    } else {
-        Course.findOne({ _id: req.body._id })
-            .then((data) => {
-                if (data == null) {
-                    res.send({
-                        success: false,
-                        status: 500,
-                        message: "course does not exist",
-                    });
-                } else {
-                    // Check if fields are being updated and update them if necessary
-                    if (req.body.courseId) {
-                        data.courseId = req.body.courseId;
-                    }
-                    if (req.body.courseName) {
-                        data.courseName = req.body.courseName;
-                    }
-                    if (req.file || req.file.fieldname) {
-                        data.attachment = req.file.key;
-                    }
-
-                    // Save only if any fields were updated
-                    if (req.body.courseId || req.body.courseName) {
-                        data
-                            .save()
-                            .then((updated) => {
-                                res.send({
-                                    success: true,
-                                    status: 200,
-                                    message: "data updated",
-                                    data: updated,
-                                });
-                            })
-                            .catch((err) => {
-                                res.send({
-                                    success: false,
-                                    status: 500,
-                                    message: err.message,
-                                });
-                            });
-                    } else {
-                        res.send({
-                            success: true,
-                            status: 200,
-                            message: "No fields updated",
-                        });
-                    }
-                }
-            })
-            .catch((err) => {
-                res.send({
-                    success: false,
-                    status: 500,
-                    message: err.message,
-                });
-            });
     }
 };
+
+
+const update = async (req, resp) => {
+    let formData = req.body
+    let validation = ""
+    if (!formData._id)
+        validation += "_id is required"
+    if (!!validation)
+        resp.send({ success: false, status: 422, message: validation })
+    else {
+        let query = { _id: formData._id }
+        await Course.findOne(query).then(async res => {
+            if (!!res) {
+                if (!!formData.courseName)
+                    res.courseName = formData.courseName
+                if (!!req.file || !!req.file.fieldname){
+                    helper.unlinkImage(res.image)
+                    res.attachment = req.file.key
+                }
+                let id = res._id
+                let prevCourse = await Course.findOne({ $and: [{ courseName: res.courseName }, { _id: { $ne: id } }] })
+                if (prevCourse)
+                    resp.send({ success: false, status: 409, message: "Course already exists with same name" })
+                else
+                    res.save().then(res => {
+                        resp.send({ success: true, status: 200, message: "Course updated Successfully", data: res })
+
+                    }).catch(err => {
+                        resp.send({ success: false, status: 500, message: !!err.message ? err.message : err })
+                    })
+            }
+            else
+                resp.send({ success: false, status: 404, message: "No Course Found" })
+        }).catch(err => {
+            resp.send({ success: false, status: 500, message: !!err.message ? err.message : err })
+        })
+    }
+
+
+}
+
 
 
 module.exports ={

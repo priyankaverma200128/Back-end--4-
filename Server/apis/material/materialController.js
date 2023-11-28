@@ -59,42 +59,72 @@ const add=async (req,res)=>{
     }
 }
 
-const all=(req,res)=>{
-    Material.find(req.body)
-    .populate("courseid")
-    .populate("branchid")
-    .populate("materialtypeid")
-    .then((data)=>{
-        res.send({success:true,status:200,message:"all material are loaded",data:data})
-    })
-    .catch((err)=>{
-        res.send({success:false,status:500,message:err.message})
-    })
+const all = async (req, resp) => {
+
+    try {
+        const materials = await Material.find(req.body)
+
+        const materialwithurl = await Promise.all(
+            materials.map(async (material) => {
+                const signedUrl = await helper.generatePresignedUrl(
+                    process.env.CYCLIC_BUCKET_NAME,
+                    material.attachment
+                )
+                return {
+                    ...material.toObject(),
+                    signedUrl
+                }
+            })
+        )
+        resp.send({
+            success: true,
+            status: 200,
+            message: "All Materials loaded",
+            data: materialwithurl,
+        })
+    }
+    catch (err) {
+        resp.send({
+            success: false,
+            status: 500,
+            message: !!err.message ? err.message : err,
+        });
+    }
 }
 
-const single=(req,res)=>{
-    let validation=""
-    if(!req.body._id){
-        validation+="id is required"
+const single = async (req, resp) => {
+    try {
+        let formData = req.body
+        let validation = ""
+        if (!formData._id)
+            validation += "_id is required"
+        if (!!validation)
+            resp.send({ success: false, status: 422, message: validation })
+
+        let query = { _id: formData._id }
+        const material = await Material.findOne(query)
+        if (!!material) {
+            const signedUrl = await helper.generatePresignedUrl(
+                process.env.CYCLIC_BUCKET_NAME,
+                material.attachment
+            )
+            resp.send({
+                success: true,
+                status: 200,
+                message: "Material loaded Successfully",
+                data: { ...material.toObject(), signedUrl },
+            });
+        } else {
+            resp.send({ success: false, status: 404, message: "No Material Found" });
+        }
+    } catch (err) {
+        resp.send({
+            success: false,
+            status: 500,
+            message: !!err.message ? err.message : err,
+        });
     }
-    if(!!validation){
-        res.send({success:false,status:500,message:validation})
-    }
-    else{
-        Material.findOne({_id:req.body._id})
-        .then((data)=>{
-            if(data==null){
-                res.send({success:false,status:500,message:"data not found"})
-            }
-            else{
-                res.send({success:true,status:200,message:"single documents loaded",data:data})
-            }
-        })
-        .catch((err)=>{
-            res.send({success:false,status:500,message:err.message})
-        })
-    }
-}
+};
 
 const update =(req,res)=>{
     let validation=""
