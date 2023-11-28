@@ -102,7 +102,7 @@ const getAll = async (req, resp) => {
         const courseswithurl = await Promise.all(
             courses.map(async (course) => {
                 const signedUrl = await helper.generatePresignedUrl(
-                    process.env.BUCKET_NAME,
+                    process.env.CYCLIC_BUCKET_NAME,
                     course.image
                 )
                 return {
