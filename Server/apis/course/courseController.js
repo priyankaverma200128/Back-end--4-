@@ -103,7 +103,7 @@ const getAll = async (req, resp) => {
             courses.map(async (course) => {
                 const signedUrl = await helper.generatePresignedUrl(
                     process.env.CYCLIC_BUCKET_NAME,
-                    course.image
+                    course.attachment
                 )
                 return {
                     ...vendor.toObject(),
