@@ -17,6 +17,7 @@ async function generatePresignedUrl (bucket,key,expiresIn = 3600){
     const command = new GetObjectCommand({
       Bucket:bucket,
       Key:key,
+      ResponseContentDisposition: 'inline'
     })
 
     const signedUrl = await getSignedUrl(s3, command, { expiresIn });
