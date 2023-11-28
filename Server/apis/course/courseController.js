@@ -1,4 +1,6 @@
 const Course = require("./courseModel")
+const helper  = require('../../helper')
+
 
 const add=async (req,res)=>{
     var validation =""
@@ -92,26 +94,37 @@ const deleteCourse = (req,res)=>{
     }
 }
 
-const getAll = (req,res)=>{
-    Course.find(req.body)
-    // .sort({createdAt:-1})
-    // .populate("")
-    .then((data)=>{
-        res.send({
-            success:true,
-            status:200,
-            message:"All Courses are Loaded",
-            data:data,
-            total:data.length
+const getAll = async (req, resp) => {
+
+    try {
+        const courses = await Course.find(req.body)
+
+        const courseswithurl = await Promise.all(
+            courses.map(async (course) => {
+                const signedUrl = await helper.generatePresignedUrl(
+                    process.env.BUCKET_NAME,
+                    course.image
+                )
+                return {
+                    ...vendor.toObject(),
+                    signedUrl
+                }
+            })
+        )
+        resp.send({
+            success: true,
+            status: 200,
+            message: "All Courses loaded",
+            data: courseswithurl,
         })
-    })
-    .catch((err)=>{
-        res.send({
-            success:false,
-            status:500,
-            message:err.message
-        })
-    })
+    }
+    catch (err) {
+        resp.send({
+            success: false,
+            status: 500,
+            message: !!err.message ? err.message : err,
+        });
+    }
 }
 
 const getSingle = (req,res)=>{
@@ -185,8 +198,8 @@ const update = (req, res) => {
                     if (req.body.courseName) {
                         data.courseName = req.body.courseName;
                     }
-                    if (req.body.attachment) {
-                        data.attachment = req.body.attachment;
+                    if (req.file || req.file.fieldname) {
+                        data.attachment = req.file.key;
                     }
 
                     // Save only if any fields were updated

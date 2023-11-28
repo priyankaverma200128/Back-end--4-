@@ -17,7 +17,7 @@ const add=async (req,res)=>{
     if(req.body.description==""){
         validation += "description is required"
     }
-    if(req.body.attachment==""){
+    if(!req.file || !req.file.fieldname){
         validation+= "attachment is required"
     }
 
@@ -38,7 +38,7 @@ const add=async (req,res)=>{
         material.materialtypeid = req.body.materialtypeid
         material.title = req.body.title
         material.description = req.body.description
-        material.attachment = req.body.attachment
+        material.attachment = req.file.key
         
         material.save()
             .then((data) => {
@@ -121,8 +121,8 @@ const update =(req,res)=>{
                     data.title=req.body.title
                 if(!!req.body.description)
                     data.description=req.body.description
-                if(!!req.body.attachment)
-                    data.attachment= req.body.attachment
+                if(!!req.file || !!req.file.fieldname)
+                    data.attachment= req.file.key
 
                     data.save()
                     .then((updated)=>{

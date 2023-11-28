@@ -5,7 +5,7 @@ const add=async(req,res)=>{
     if(req.body.name==""){
         validation += " name is required"
     }
-    if(req.body.attachment==""){
+    if(!req.file || !req.file.fieldname){
         validation += "attachment is required"
     }
     if(req.body.courseId==""){
@@ -24,7 +24,7 @@ const add=async(req,res)=>{
         branch.autoId=total+1
         branch.courseId=req.body.courseId
         branch.name=req.body.name
-        branch.attachment = req.body.attachment
+        branch.attachment = req.file.key
         branch.save()
         .then((data)=>{
             res.send({success: true,
@@ -113,8 +113,8 @@ const update = (req,res)=>{
                     data.courseId=req.body.courseId
                 if(!!req.body.name)
                     data.name=req.body.name
-                if(!!req.body.attachment)
-                    data.attachment= req.body.attachment
+                if(!!req.file || !!req.file.fieldname)
+                    data.attachment= req.file.key
                 
                     data.save()
                     .then((updated)=>{
