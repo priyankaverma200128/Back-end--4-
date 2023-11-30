@@ -63,7 +63,7 @@ const add=async (req,res)=>{
 const all = async (req, resp) => {
 
     try {
-        const materials = await Material.find(req.body).populate('courseid').populate('branchid')
+        const materials = await Material.find(req.body).populate('courseid').populate('branchid').populate('materialtypeid')
 
         const materialwithurl = await Promise.all(
             materials.map(async (material) => {
