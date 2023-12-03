@@ -87,7 +87,7 @@ const getSingle = async (req, resp) => {
 
         let query = { _id: formData._id }
         const branch = await Branch.findOne(query).populate('courseId')
-        if (!!course) {
+        if (!!branch) {
             const signedUrl = await helper.generatePresignedUrl(
                 process.env.CYCLIC_BUCKET_NAME,
                 branch.attachment
