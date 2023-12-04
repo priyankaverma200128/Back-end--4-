@@ -175,7 +175,7 @@ const update = async (req, resp) => {
             if (!!res) {
                 if (!!formData.courseName)
                     res.courseName = formData.courseName
-                if (!!req.file || !!req.file.fieldname){
+                if (!!req.file ){
                     helper.unlinkImage(res.image)
                     res.attachment = req.file.key
                 }
