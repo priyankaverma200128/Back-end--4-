@@ -6,7 +6,7 @@ const add=async(req,res)=>{
     if(req.body.name==""){
         validation += " name is required"
     }
-    if(!req.file || !req.file.fieldname){
+    if(!req.file){
         validation += "attachment is required"
     }
     if(req.body.courseId==""){
@@ -135,7 +135,7 @@ const update = (req,res)=>{
                     data.courseId=req.body.courseId
                 if(!!req.body.name)
                     data.name=req.body.name
-                if(!!req.file || !!req.file.fieldname)
+                if(!!req.file )
                     data.attachment= req.file.key
                 
                     data.save()
